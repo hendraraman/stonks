@@ -9,7 +9,6 @@ from functools import partial
 import pandas as pd
 
 app = Flask(__name__)
-
 def calculate_rsi(data, window=14):
     """Calculate RSI indicator"""
     delta = data['Close'].diff()
@@ -86,30 +85,49 @@ def stock():
                              plot_url=plot_url)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-
+def calculate_rsi(data, window=14):
+    """Calculate RSI indicator"""
+    delta = data['Close'].diff()
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
+    
+    avg_gain = gain.rolling(window=window, min_periods=1).mean()
+    avg_loss = loss.rolling(window=window, min_periods=1).mean()
+    
+    rs = avg_gain / avg_loss
+    rsi = 100 - (100 / (1 + rs))
+    
+    return rsi
 def process_single_stock(name_ticker_tuple, start_date, end_date):
-    """Process a single stock's data"""
+    """Process a single stock's data with improved error handling"""
     name, ticker = name_ticker_tuple
     try:
         # Download stock data
         stock_data = yf.download(ticker, start=start_date, end=end_date, progress=False)
         
+        # Validate data
         if stock_data.empty or len(stock_data) < 2:
+            print(f"No data available for {ticker}")
             return None
-        
-        # Calculate basic metrics
+            
+        # Calculate prices
         current_price = float(stock_data['Close'].iloc[-1])
         highest_price = float(stock_data['High'].max())
+        
+        # Validate prices
+        if pd.isna(current_price) or pd.isna(highest_price):
+            print(f"Invalid prices for {ticker}")
+            return None
+            
         gain_percentage = ((highest_price - current_price) / current_price) * 100
         
-        # Calculate technical indicators
+        # Calculate RSI
+        stock_data['RSI'] = calculate_rsi(stock_data)
+        latest_rsi = float(stock_data['RSI'].dropna().iloc[-1]) if not stock_data['RSI'].dropna().empty else None
+        
+        # Calculate moving averages
         stock_data['50_MA'] = stock_data['Close'].rolling(window=50).mean()
         stock_data['100_MA'] = stock_data['Close'].rolling(window=100).mean()
-        stock_data['RSI'] = calculate_rsi(stock_data)
-        
-        # Get latest RSI value
-        latest_rsi = float(stock_data['RSI'].dropna().iloc[-1]) if not stock_data['RSI'].dropna().empty else None
         
         return {
             'name': name,
@@ -120,6 +138,7 @@ def process_single_stock(name_ticker_tuple, start_date, end_date):
             'rsi': round(latest_rsi, 2) if latest_rsi is not None else None,
             'stock_data': stock_data
         }
+        
     except Exception as e:
         print(f"Error processing {ticker}: {str(e)}")
         return None
@@ -131,24 +150,25 @@ def investment_opportunities():
         end_date = request.form['end_date']
         min_gain_percentage = float(request.form.get('min_gain_percentage', 13))
         
-        # Collect all results in parallel
+        # Process stocks sequentially
         all_results = []
-        with ThreadPoolExecutor(max_workers=10) as executor:
-            futures = []
-            for name, ticker in nifty_50_tickers.items():
-                future = executor.submit(process_single_stock, (name, ticker), start_date, end_date)
-                futures.append(future)
-            
-            # Collect results as they complete
-            for future in as_completed(futures):
-                result = future.result()
-                if result is not None:
+        failed_tickers = []
+        
+        for name, ticker in nifty_50_tickers.items():
+            try:
+                result = process_single_stock((name, ticker), start_date, end_date)
+                if result:
                     all_results.append(result)
+                else:
+                    failed_tickers.append(f"{name} ({ticker}) - No valid data")
+            except Exception as e:
+                failed_tickers.append(f"{name} ({ticker}) - Error: {str(e)}")
+                continue
         
         # Sort results by gain percentage
         sorted_results = sorted(all_results, key=lambda x: x['gain_percentage'], reverse=True)
         
-        # Prepare summary of all stocks
+        # Prepare summary and filtered results
         summary_table = []
         filtered_results = []
         
@@ -163,19 +183,25 @@ def investment_opportunities():
                 'rsi': result['rsi']
             })
             
-            # If meets minimum gain criteria, generate plot and add to filtered results
+            # If meets minimum gain criteria, add to filtered results
             if result['gain_percentage'] >= min_gain_percentage:
-                plot_url = generate_plot(result['stock_data'], result['ticker'])
-                result_with_plot = result.copy()
-                result_with_plot['plot_url'] = plot_url
-                del result_with_plot['stock_data']  # Remove raw data before sending to template
-                filtered_results.append(result_with_plot)
+                try:
+                    plot_url = generate_plot(result['stock_data'], result['ticker'])
+                    result_with_plot = result.copy()
+                    result_with_plot['plot_url'] = plot_url
+                    del result_with_plot['stock_data']
+                    filtered_results.append(result_with_plot)
+                except Exception as e:
+                    failed_tickers.append(f"Error generating plot for {result['ticker']}: {str(e)}")
         
         return render_template(
             'investment_results.html',
             summary_table=summary_table,
             results=filtered_results,
-            min_gain_percentage=min_gain_percentage
+            min_gain_percentage=min_gain_percentage,
+            start_date=start_date,
+            end_date=end_date,
+            failed_tickers=failed_tickers if failed_tickers else None
         )
     
     return render_template('investment_opportunities.html')

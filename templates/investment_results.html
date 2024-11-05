@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIFTY 50 Investment Analysis Results</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">NIFTY 50 Analysis Results</h1>
+            <a href="/investment_opportunities" class="text-blue-500 hover:text-blue-600">← Back to Analysis Form</a>
+        </div>
+
+        <!-- Summary Table -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">All Stocks Summary (Sorted by Potential Gain)</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full table-auto">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Current Price</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Highest Price</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Potential Gain %</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">RSI</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for stock in summary_table %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {{ stock.name }} ({{ stock.ticker }})
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">
+                                ₹{{ stock.current_price }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">
+                                ₹{{ stock.highest_price }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right {% if stock.gain_percentage >= 20 %}text-green-600{% elif stock.gain_percentage >= 10 %}text-yellow-600{% else %}text-gray-500{% endif %}">
+                                {{ stock.gain_percentage }}%
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right {% if stock.rsi <= 30 %}text-green-600{% elif stock.rsi >= 70 %}text-red-600{% else %}text-gray-500{% endif %}">
+                                {{ stock.rsi|round(2) if stock.rsi else 'N/A' }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Detailed Analysis Section -->
+        {% if results %}
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Detailed Analysis of High-Potential Stocks</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for result in results %}
+                <div class="border rounded-lg p-4">
+                    <div class="mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800">{{ result.name }} ({{ result.ticker }})</h3>
+                        <div class="grid grid-cols-2 gap-4 mt-2">
+                            <div>
+                                <p class="text-sm text-gray-600">Current Price</p>
+                                <p class="font-medium">₹{{ result.current_price }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Highest Price</p>
+                                <p class="font-medium">₹{{ result.highest_price }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Potential Gain</p>
+                                <p class="font-medium text-green-600">{{ result.gain_percentage }}%</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">RSI</p>
+                                <p class="font-medium">{{ result.rsi|round(2) if result.rsi else 'N/A' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <img src="data:image/png;base64,{{ result.plot_url }}" alt="{{ result.name }} Chart" class="w-full">
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-yellow-700">
+                        No stocks found meeting the minimum gain percentage criteria.
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <footer class="bg-white mt-8 py-4">
+        <div class="container mx-auto px-4 text-center text-sm text-gray-600">
+            <p>Data sourced from Yahoo Finance. Past performance is not indicative of future results.</p>
+        </div>
+    </footer>
+</body>
+</html>

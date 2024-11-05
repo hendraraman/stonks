@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stock Data Result</title>
+</head>
+<body>
+    <h1>Stock Data for {{ ticker }}</h1>
+    <p>Highest Price: {{ highest_price }}</p>
+    <p>Lowest Price: {{ lowest_price }}</p>
+    <img src="data:image/png;base64,{{ plot_url }}" alt="Stock Plot">
+</body>
+</html>

@@ -82,6 +82,9 @@
                                 <p class="text-sm text-gray-600">RSI</p>
                                 <p class="font-medium">{{ result.rsi|round(2) if result.rsi else 'N/A' }}</p>
                             </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Closeness to Lowest Price</p>
+                                <p class="font-medium">{{ result.lowest_closeness|round(2) }}</p>
                         </div>
                     </div>
                     <div class="mt-4">

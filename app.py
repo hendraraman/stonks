@@ -9,6 +9,8 @@ from functools import partial
 import pandas as pd
 
 app = Flask(__name__)
+
+
 def calculate_rsi(data, window=14):
     """Calculate RSI indicator"""
     delta = data['Close'].diff()
@@ -85,19 +87,8 @@ def stock():
                              plot_url=plot_url)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-def calculate_rsi(data, window=14):
-    """Calculate RSI indicator"""
-    delta = data['Close'].diff()
-    gain = delta.where(delta > 0, 0)
-    loss = -delta.where(delta < 0, 0)
-    
-    avg_gain = gain.rolling(window=window, min_periods=1).mean()
-    avg_loss = loss.rolling(window=window, min_periods=1).mean()
-    
-    rs = avg_gain / avg_loss
-    rsi = 100 - (100 / (1 + rs))
-    
-    return rsi
+
+
 def process_single_stock(name_ticker_tuple, start_date, end_date):
     """Process a single stock's data with improved error handling"""
     name, ticker = name_ticker_tuple
@@ -112,14 +103,16 @@ def process_single_stock(name_ticker_tuple, start_date, end_date):
             
         # Calculate prices
         current_price = float(stock_data['Close'].iloc[-1])
-        highest_price = float(stock_data['High'].max())
+        highest_price = float(stock_data['Close'].max())
+        lowest_price = float(stock_data["Close"].min())
         
         # Validate prices
         if pd.isna(current_price) or pd.isna(highest_price):
             print(f"Invalid prices for {ticker}")
             return None
             
-        gain_percentage = ((highest_price - current_price) / current_price) * 100
+        discount_percentage = ((highest_price - current_price) / current_price) * 100
+        lowest_closeness = ((lowest_price - current_price) / current_price) * 100
         
         # Calculate RSI
         stock_data['RSI'] = calculate_rsi(stock_data)
@@ -134,7 +127,8 @@ def process_single_stock(name_ticker_tuple, start_date, end_date):
             'ticker': ticker,
             'current_price': round(current_price, 2),
             'highest_price': round(highest_price, 2),
-            'gain_percentage': round(gain_percentage, 2),
+            'discount_percentage': round(discount_percentage, 2),
+            'lowest_closeness': round(lowest_closeness, 2), 
             'rsi': round(latest_rsi, 2) if latest_rsi is not None else None,
             'stock_data': stock_data
         }
@@ -148,7 +142,7 @@ def investment_opportunities():
     if request.method == 'POST':
         start_date = request.form['start_date']
         end_date = request.form['end_date']
-        min_gain_percentage = float(request.form.get('min_gain_percentage', 13))
+        min_discount_percentage = float(request.form.get('min_discount_percentage', 13))
         
         # Process stocks sequentially
         all_results = []
@@ -166,7 +160,7 @@ def investment_opportunities():
                 continue
         
         # Sort results by gain percentage
-        sorted_results = sorted(all_results, key=lambda x: x['gain_percentage'], reverse=True)
+        sorted_results = sorted(all_results, key=lambda x: x['discount_percentage'], reverse=True)
         
         # Prepare summary and filtered results
         summary_table = []
@@ -179,12 +173,12 @@ def investment_opportunities():
                 'ticker': result['ticker'],
                 'current_price': result['current_price'],
                 'highest_price': result['highest_price'],
-                'gain_percentage': result['gain_percentage'],
+                'discount_percentage': result['discount_percentage'],
                 'rsi': result['rsi']
             })
             
             # If meets minimum gain criteria, add to filtered results
-            if result['gain_percentage'] >= min_gain_percentage:
+            if result['discount_percentage'] >= min_discount_percentage:
                 try:
                     plot_url = generate_plot(result['stock_data'], result['ticker'])
                     result_with_plot = result.copy()
@@ -193,12 +187,12 @@ def investment_opportunities():
                     filtered_results.append(result_with_plot)
                 except Exception as e:
                     failed_tickers.append(f"Error generating plot for {result['ticker']}: {str(e)}")
-        
+        print("the summary table is ", summary_table)
         return render_template(
             'investment_results.html',
             summary_table=summary_table,
             results=filtered_results,
-            min_gain_percentage=min_gain_percentage,
+            min_discount_percentage=min_discount_percentage,
             start_date=start_date,
             end_date=end_date,
             failed_tickers=failed_tickers if failed_tickers else None
@@ -210,17 +204,21 @@ def investment_opportunities():
 @app.route('/')
 def home():
     return render_template('index.html')
+
+
 nifty_50_tickers = {
     "Adani Enterprises": "ADANIENT.NS",
     "Adani Ports": "ADANIPORTS.NS",
     "Asian Paints": "ASIANPAINT.NS",
     "Axis Bank": "AXISBANK.NS",
+    "Appolo Hospitals Enterprise Ltd": "APOLLOHOSP.NS",
     "Bajaj Auto": "BAJAJ-AUTO.NS",
     "Bajaj Finance": "BAJFINANCE.NS",
     "Bajaj Finserv": "BAJAJFINSV.NS",
     "BPCL": "BPCL.NS",
     "Bharti Airtel": "BHARTIARTL.NS",
     "Britannia": "BRITANNIA.NS",
+    "Bharat Electronics Ltd ": "BEL.NS",
     "Cipla": "CIPLA.NS",
     "Coal India": "COALINDIA.NS",
     "Divi's Laboratories": "DIVISLAB.NS",
@@ -251,6 +249,7 @@ nifty_50_tickers = {
     "Reliance Industries": "RELIANCE.NS",
     "SBI Life Insurance": "SBILIFE.NS",
     "State Bank of India": "SBIN.NS",
+    "Shriram Finance Ltd": "SHRIRAMFIN.NS",
     "Sun Pharma": "SUNPHARMA.NS",
     "Tata Consultancy Services": "TCS.NS",
     "Tata Consumer Products": "TATACONSUM.NS",
@@ -258,6 +257,7 @@ nifty_50_tickers = {
     "Tata Steel": "TATASTEEL.NS",
     "Tech Mahindra": "TECHM.NS",
     "Titan Company": "TITAN.NS",
+    "Trent Ltd": "TRENT.NS",
     "UltraTech Cement": "ULTRACEMCO.NS",
     "UPL": "UPL.NS",
     "Wipro": "WIPRO.NS"
@@ -266,3 +266,12 @@ nifty_50_tickers = {
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+"""  
+1: nifty dict be variable
+2: also consider diff btw hightest and lowest  and make a filter for that
+3: look for stocks closer to its lowest price and include it as gain percentage
+4: current gain perc is discount perc wrt to highest price
+
+"""

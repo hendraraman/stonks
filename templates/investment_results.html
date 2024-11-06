@@ -16,7 +16,7 @@
 
         <!-- Summary Table -->
         <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">All Stocks Summary (Sorted by Potential Gain)</h2>
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">All Stocks Summary (Sorted by Potential Discount)</h2>
             <div class="overflow-x-auto">
                 <table class="min-w-full table-auto">
                     <thead class="bg-gray-50">
@@ -24,7 +24,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Current Price</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Highest Price</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Potential Gain %</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Potential Discount %</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">RSI</th>
                         </tr>
                     </thead>
@@ -40,8 +40,8 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">
                                 ₹{{ stock.highest_price }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right {% if stock.gain_percentage >= 20 %}text-green-600{% elif stock.gain_percentage >= 10 %}text-yellow-600{% else %}text-gray-500{% endif %}">
-                                {{ stock.gain_percentage }}%
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right {% if stock.discount_percentage >= 20 %}text-green-600{% elif stock.discount_percentage >= 10 %}text-yellow-600{% else %}text-gray-500{% endif %}">
+                                {{ stock.discount_percentage }}%
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-right {% if stock.rsi <= 30 %}text-green-600{% elif stock.rsi >= 70 %}text-red-600{% else %}text-gray-500{% endif %}">
                                 {{ stock.rsi|round(2) if stock.rsi else 'N/A' }}
@@ -72,8 +72,8 @@
                                 <p class="font-medium">₹{{ result.highest_price }}</p>
                             </div>
                             <div>
-                                <p class="text-sm text-gray-600">Potential Gain</p>
-                                <p class="font-medium text-green-600">{{ result.gain_percentage }}%</p>
+                                <p class="text-sm text-gray-600">Potential Discount</p>
+                                <p class="font-medium text-green-600">{{ result.discount_percentage }}%</p>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-600">RSI</p>
@@ -98,7 +98,7 @@
                 </div>
                 <div class="ml-3">
                     <p class="text-sm text-yellow-700">
-                        No stocks found meeting the minimum gain percentage criteria.
+                        No stocks found meeting the minimum Discount percentage criteria.
                     </p>
                 </div>
             </div>

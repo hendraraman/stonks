@@ -65,6 +65,8 @@ def stock():
     ticker = request.form['ticker']
     start_date = request.form['start_date']
     period = request.form.get('period', '1y')
+    # since we are using 100day ma, we add 100 days to the start date
+    start_date = pd.to_datetime(start_date) - pd.Timedelta(days=100)
 
     try:
         stock_data = yf.download(ticker, start=start_date, period=period)
@@ -73,6 +75,8 @@ def stock():
 
         stock_data['50_MA'] = stock_data['Close'].rolling(window=50).mean()
         stock_data['100_MA'] = stock_data['Close'].rolling(window=100).mean()
+        # remove the first 100 days of data
+        stock_data = stock_data[100:]
         stock_data['RSI'] = calculate_rsi(stock_data)
 
         highest_price = stock_data['High'].max()
@@ -174,6 +178,7 @@ def investment_opportunities():
                 'current_price': result['current_price'],
                 'highest_price': result['highest_price'],
                 'discount_percentage': result['discount_percentage'],
+                'lowest_closeness': result['lowest_closeness'],
                 'rsi': result['rsi']
             })
             

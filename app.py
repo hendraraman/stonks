@@ -124,8 +124,8 @@ def process_single_stock(name_ticker_tuple, start_date, end_date):
             return None
             
         discount_percentage = ((highest_price - current_price) / current_price) * 100
-        lowest_closeness = ((lowest_price - current_price) / current_price) * 100
-        
+        lowest_closeness = ((current_price - lowest_price) / lowest_price) * 100
+
         # Calculate RSI
         stock_data['RSI'] = calculate_rsi(stock_data)
         latest_rsi = float(stock_data['RSI'].dropna().iloc[-1]) if not stock_data['RSI'].dropna().empty else None

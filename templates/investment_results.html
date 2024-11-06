@@ -26,6 +26,7 @@
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Highest Price</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Potential Discount %</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">RSI</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Closeness to Lowest Price</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -46,6 +47,8 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-right {% if stock.rsi <= 30 %}text-green-600{% elif stock.rsi >= 70 %}text-red-600{% else %}text-gray-500{% endif %}">
                                 {{ stock.rsi|round(2) if stock.rsi else 'N/A' }}
                             </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right {% if stock.lowest_closeness >= 0.8 %}text-green-600{% elif stock.lowest_closeness >= 0.6 %}text-yellow-600{% else %}text-gray-500{% endif %}">
+                                {{ stock.lowest_closeness|round(2) }}
                         </tr>
                         {% endfor %}
                     </tbody>

@@ -96,6 +96,8 @@ def stock():
 def process_single_stock(name_ticker_tuple, start_date, end_date):
     """Process a single stock's data with improved error handling"""
     name, ticker = name_ticker_tuple
+    # add 100 days to the start date
+    start_date = pd.to_datetime(start_date) - pd.Timedelta(days=100)
     try:
         # Download stock data
         stock_data = yf.download(ticker, start=start_date, end=end_date, progress=False)
@@ -104,7 +106,13 @@ def process_single_stock(name_ticker_tuple, start_date, end_date):
         if stock_data.empty or len(stock_data) < 2:
             print(f"No data available for {ticker}")
             return None
-            
+        
+        # Calculate moving averages
+        stock_data['50_MA'] = stock_data['Close'].rolling(window=50).mean()
+        stock_data['100_MA'] = stock_data['Close'].rolling(window=100).mean()
+
+        stock_data = stock_data[100:]
+        
         # Calculate prices
         current_price = float(stock_data['Close'].iloc[-1])
         highest_price = float(stock_data['Close'].max())
@@ -122,10 +130,7 @@ def process_single_stock(name_ticker_tuple, start_date, end_date):
         stock_data['RSI'] = calculate_rsi(stock_data)
         latest_rsi = float(stock_data['RSI'].dropna().iloc[-1]) if not stock_data['RSI'].dropna().empty else None
         
-        # Calculate moving averages
-        stock_data['50_MA'] = stock_data['Close'].rolling(window=50).mean()
-        stock_data['100_MA'] = stock_data['Close'].rolling(window=100).mean()
-        
+
         return {
             'name': name,
             'ticker': ticker,

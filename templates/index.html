@@ -2,19 +2,88 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Home Page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Analysis App</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <!-- Add custom styles for background -->
+    <style>
+        .bg-custom {
+            background-image: url('https://brags.wordpress.com/wp-content/uploads/2011/09/mankatha-movie-stills00.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+        }
+        
+        /* Add an overlay to ensure text remains readable */
+        .bg-overlay {
+            background: rgba(255, 255, 255, 0.7); /* Reduced opacity for better visibility */
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1;
+        }
+        
+        /* Ensure content stays above overlay */
+        .content-wrapper {
+            position: relative;
+            z-index: 2;
+            padding-top: 350px; /* Push the content down to reveal the face */
+        }
+    </style>
 </head>
-<body>
-    <h1>Welcome to the Stock Analysis App</h1>
-    <p>Click below to explore investment opportunities.</p>
-    <a href="/investment_opportunities">Go to Investment Opportunities</a>
-    <form action="/investment_opportunities" method="get">
-        <button type="submit">Investment Opportunities</button>
-    </form>
-    # another page to display finance 101 
-    <p> Click below page to learn finance</p>
-    <a href="/finance_101">Go to Finance 101</a>
-    <form action="/finance_101" method="get">
-        <button type="submit">Finance 101</button>
+<body class="bg-custom min-h-screen">
+    <!-- Add overlay div -->
+    <div class="bg-overlay"></div>
+    
+    <!-- Add content-wrapper class to main container -->
+    <div class="container mx-auto px-4 content-wrapper">
+        <!-- Rest of your content remains the same -->
+        <div class="text-center mb-16">
+            <h1 class="text-5xl font-bold text-gray-900 mb-4">
+                Welcome to Stocks 📈
+            </h1>
+            <p class="text-xl text-gray-600">Your companion for smarter investment decisions</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <!-- Investment Opportunities Card -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden transform transition duration-300 hover:scale-105">
+                <!-- Card content remains the same -->
+                <div class="p-8">
+                    <div class="mb-6">
+                        <svg class="w-12 h-12 text-blue-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-center text-gray-900 mb-4">Investment Opportunities</h2>
+                    <p class="text-gray-600 text-center mb-6">Discover potential investment opportunities in NIFTY 50 stocks with our technical analysis.</p>
+                    <a href="/investment_opportunities"
+                       class="block w-full bg-blue-500 text-white text-center py-3 rounded-lg font-semibold hover:bg-blue-600 transition duration-300">
+                        Explore Opportunities
+                    </a>
+                </div>
+            </div>
+
+            <!-- Finance 101 Card -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden transform transition duration-300 hover:scale-105">
+                <div class="p-8">
+                    <div class="mb-6">
+                        <svg class="w-12 h-12 text-green-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-center text-gray-900 mb-4">Finance 101</h2>
+                    <p class="text-gray-600 text-center mb-6">Learn financial concepts with our daily updated educational content and resources.</p>
+                    <a href="/finance_101"
+                       class="block w-full bg-green-500 text-white text-center py-3 rounded-lg font-semibold hover:bg-green-600 transition duration-300">
+                        Start Learning
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

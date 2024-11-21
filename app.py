@@ -7,6 +7,8 @@ import base64
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import partial
 import pandas as pd
+import matplotlib
+matplotlib.use('Agg') 
 
 app = Flask(__name__)
 
@@ -124,8 +126,8 @@ def process_single_stock(name_ticker_tuple, start_date, end_date):
             return None
             
         discount_percentage = ((highest_price - current_price) / current_price) * 100
-        lowest_closeness = ((lowest_price - current_price) / current_price) * 100
-        
+        lowest_closeness = ((current_price - lowest_price) / lowest_price) * 100
+
         # Calculate RSI
         stock_data['RSI'] = calculate_rsi(stock_data)
         latest_rsi = float(stock_data['RSI'].dropna().iloc[-1]) if not stock_data['RSI'].dropna().empty else None
@@ -136,6 +138,7 @@ def process_single_stock(name_ticker_tuple, start_date, end_date):
             'ticker': ticker,
             'current_price': round(current_price, 2),
             'highest_price': round(highest_price, 2),
+            'lowest_price': round(lowest_price, 2),
             'discount_percentage': round(discount_percentage, 2),
             'lowest_closeness': round(lowest_closeness, 2), 
             'rsi': round(latest_rsi, 2) if latest_rsi is not None else None,
@@ -168,15 +171,12 @@ def investment_opportunities():
                 failed_tickers.append(f"{name} ({ticker}) - Error: {str(e)}")
                 continue
         
-        # Sort results by gain percentage
         sorted_results = sorted(all_results, key=lambda x: x['discount_percentage'], reverse=True)
         
-        # Prepare summary and filtered results
         summary_table = []
         filtered_results = []
         
         for result in sorted_results:
-            # Add to summary table
             summary_table.append({
                 'name': result['name'],
                 'ticker': result['ticker'],
@@ -184,6 +184,7 @@ def investment_opportunities():
                 'highest_price': result['highest_price'],
                 'discount_percentage': result['discount_percentage'],
                 'lowest_closeness': result['lowest_closeness'],
+                "absolute_difference": result["current_price"] - result["lowest_price"],
                 'rsi': result['rsi']
             })
             

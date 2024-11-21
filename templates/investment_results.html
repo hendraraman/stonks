@@ -5,6 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NIFTY 50 Investment Analysis Results</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <style>
+        .sort-header {
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+        }
+        .sort-header:hover {
+            background-color: #f3f4f6;
+        }
+        .sort-icon::after {
+            content: '↕️';
+            margin-left: 4px;
+            opacity: 0.3;
+        }
+        .sort-asc::after {
+            content: '↑';
+            opacity: 1;
+        }
+        .sort-desc::after {
+            content: '↓';
+            opacity: 1;
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto px-4 py-8">
@@ -16,21 +39,27 @@
 
         <!-- Summary Table -->
         <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">All Stocks Summary (Sorted by Potential Discount)</h2>
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">All Stocks Summary</h2>
             <div class="overflow-x-auto">
-                <table class="min-w-full table-auto">
+                <table class="min-w-full table-auto" id="stocksTable">
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Current Price</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Highest Price</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Potential Discount %</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">RSI</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sort-header sort-icon" data-sort="current_price">Current Price</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sort-header sort-icon" data-sort="highest_price">Highest Price</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sort-header sort-icon" data-sort="discount_percentage">Potential Discount %</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sort-header sort-icon" data-sort="rsi">RSI</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sort-header sort-icon" data-sort="lowest_closeness">Closeness to Lowest</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="bg-white divide-y divide-gray-200" id="stocksTableBody">
                         {% for stock in summary_table %}
-                        <tr class="hover:bg-gray-50">
+                        <tr class="hover:bg-gray-50" 
+                            data-current_price="{{ stock.current_price }}"
+                            data-highest_price="{{ stock.highest_price }}"
+                            data-discount_percentage="{{ stock.discount_percentage }}"
+                            data-rsi="{{ stock.rsi }}"
+                            data-lowest_closeness="{{ stock.lowest_closeness }}">
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                 {{ stock.name }} ({{ stock.ticker }})
                             </td>
@@ -46,6 +75,9 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-right {% if stock.rsi <= 30 %}text-green-600{% elif stock.rsi >= 70 %}text-red-600{% else %}text-gray-500{% endif %}">
                                 {{ stock.rsi|round(2) if stock.rsi else 'N/A' }}
                             </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right {% if stock.lowest_closeness >= 0.8 %}text-green-600{% elif stock.lowest_closeness >= 0.6 %}text-yellow-600{% else %}text-gray-500{% endif %}">
+                                {{ stock.lowest_closeness|round(2) }}
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -53,55 +85,55 @@
             </div>
         </div>
 
-        <!-- Detailed Analysis Section -->
+        <!-- Detailed Analysis with Plots -->
         {% if results %}
-        <div class="bg-white rounded-lg shadow-lg p-6">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">Detailed Analysis of High-Potential Stocks</h2>
+        <div class="mt-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6">Detailed Analysis for Selected Stocks</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {% for result in results %}
-                <div class="border rounded-lg p-4">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">{{ result.name }} ({{ result.ticker }})</h3>
                     <div class="mb-4">
-                        <h3 class="text-lg font-semibold text-gray-800">{{ result.name }} ({{ result.ticker }})</h3>
-                        <div class="grid grid-cols-2 gap-4 mt-2">
-                            <div>
-                                <p class="text-sm text-gray-600">Current Price</p>
-                                <p class="font-medium">₹{{ result.current_price }}</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-600">Highest Price</p>
-                                <p class="font-medium">₹{{ result.highest_price }}</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-600">Potential Discount</p>
-                                <p class="font-medium text-green-600">{{ result.discount_percentage }}%</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-600">RSI</p>
-                                <p class="font-medium">{{ result.rsi|round(2) if result.rsi else 'N/A' }}</p>
-                            </div>
-                        </div>
+                        <img src="data:image/png;base64,{{ result.plot_url }}" 
+                             alt="Stock chart for {{ result.ticker }}"
+                             class="w-full h-auto rounded-lg shadow">
                     </div>
-                    <div class="mt-4">
-                        <img src="data:image/png;base64,{{ result.plot_url }}" alt="{{ result.name }} Chart" class="w-full">
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="text-gray-600">Current Price:</p>
+                            <p class="font-semibold">₹{{ result.current_price }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">Highest Price:</p>
+                            <p class="font-semibold">₹{{ result.highest_price }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">Discount %:</p>
+                            <p class="font-semibold {% if result.discount_percentage >= 20 %}text-green-600{% elif result.discount_percentage >= 10 %}text-yellow-600{% endif %}">
+                                {{ result.discount_percentage }}%
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">RSI:</p>
+                            <p class="font-semibold {% if result.rsi <= 30 %}text-green-600{% elif result.rsi >= 70 %}text-red-600{% endif %}">
+                                {{ result.rsi|round(2) if result.rsi else 'N/A' }}
+                            </p>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
             </div>
         </div>
-        {% else %}
-        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm text-yellow-700">
-                        No stocks found meeting the minimum Discount percentage criteria.
-                    </p>
-                </div>
-            </div>
+        {% endif %}
+
+        {% if failed_tickers %}
+        <div class="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-yellow-800 mb-2">Processing Warnings</h3>
+            <ul class="list-disc list-inside text-yellow-700">
+                {% for ticker in failed_tickers %}
+                <li>{{ ticker }}</li>
+                {% endfor %}
+            </ul>
         </div>
         {% endif %}
     </div>
@@ -111,5 +143,60 @@
             <p>Data sourced from Yahoo Finance. Past performance is not indicative of future results.</p>
         </div>
     </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Cache the original table data
+            const tableBody = document.getElementById('stocksTableBody');
+            const originalRows = Array.from(tableBody.getElementsByTagName('tr'));
+            const sortStates = {};
+
+            // Add click handlers to all sortable headers
+            document.querySelectorAll('.sort-header').forEach(header => {
+                const column = header.getAttribute('data-sort');
+                sortStates[column] = 0; // 0: original, 1: descending, 2: ascending
+
+                header.addEventListener('click', () => {
+                    // Remove sort classes from all headers
+                    document.querySelectorAll('.sort-header').forEach(h => {
+                        if (h !== header) {
+                            h.classList.remove('sort-asc', 'sort-desc');
+                            h.classList.add('sort-icon');
+                            sortStates[h.getAttribute('data-sort')] = 0;
+                        }
+                    });
+
+                    // Update sort state for clicked column
+                    sortStates[column] = (sortStates[column] + 1) % 3;
+
+                    // Update sort indicator
+                    header.classList.remove('sort-asc', 'sort-desc', 'sort-icon');
+                    if (sortStates[column] === 1) {
+                        header.classList.add('sort-desc');
+                    } else if (sortStates[column] === 2) {
+                        header.classList.add('sort-asc');
+                    } else {
+                        header.classList.add('sort-icon');
+                    }
+
+                    // Sort the rows
+                    const rows = Array.from(tableBody.getElementsByTagName('tr'));
+                    const sortedRows = sortStates[column] === 0 
+                        ? originalRows 
+                        : rows.sort((a, b) => {
+                            const aValue = parseFloat(a.getAttribute(`data-${column}`));
+                            const bValue = parseFloat(b.getAttribute(`data-${column}`));
+                            return sortStates[column] === 1 
+                                ? bValue - aValue  // descending
+                                : aValue - bValue; // ascending
+                        });
+
+                    // Update the table
+                    tableBody.innerHTML = '';
+                    sortedRows.forEach(row => tableBody.appendChild(row));
+                });
+            });
+        });
+    </script>
 </body>
 </html>

@@ -98,18 +98,14 @@ def stock():
 def process_single_stock(name_ticker_tuple, start_date, end_date):
     """Process a single stock's data with improved error handling"""
     name, ticker = name_ticker_tuple
-    # add 100 days to the start date
     start_date = pd.to_datetime(start_date) - pd.Timedelta(days=100)
     try:
-        # Download stock data
         stock_data = yf.download(ticker, start=start_date, end=end_date, progress=False)
         
-        # Validate data
         if stock_data.empty or len(stock_data) < 2:
             print(f"No data available for {ticker}")
             return None
         
-        # Calculate moving averages
         stock_data['50_MA'] = stock_data['Close'].rolling(window=50).mean()
         stock_data['100_MA'] = stock_data['Close'].rolling(window=100).mean()
 
@@ -211,6 +207,10 @@ def investment_opportunities():
     
     return render_template('investment_opportunities.html')
 
+# stock 101 static page
+@app.route('/finance_101')
+def finance_101():
+    return render_template('finance_101.html')
 
 @app.route('/')
 def home():

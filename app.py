@@ -144,7 +144,7 @@ def process_single_stock(name_ticker_tuple, start_date, end_date):
     except Exception as e:
         print(f"Error processing {ticker}: {str(e)}")
         return None
-
+        
 @app.route('/investment_opportunities', methods=['GET', 'POST'])
 def investment_opportunities():
     if request.method == 'POST':
@@ -172,6 +172,7 @@ def investment_opportunities():
         summary_table = []
         filtered_results = []
         
+        # First prepare all summary data
         for result in sorted_results:
             summary_table.append({
                 'name': result['name'],
@@ -186,15 +187,20 @@ def investment_opportunities():
             
             # If meets minimum gain criteria, add to filtered results
             if result['discount_percentage'] >= min_discount_percentage:
-                try:
-                    plot_url = generate_plot(result['stock_data'], result['ticker'])
-                    result_with_plot = result.copy()
-                    result_with_plot['plot_url'] = plot_url
-                    del result_with_plot['stock_data']
-                    filtered_results.append(result_with_plot)
-                except Exception as e:
-                    failed_tickers.append(f"Error generating plot for {result['ticker']}: {str(e)}")
-        print("the summary table is ", summary_table)
+                filtered_result = result.copy()
+                filtered_result['plot_url'] = None  # Initially no plot
+                filtered_result['stock_data'] = result['stock_data']
+                filtered_results.append(filtered_result)
+
+        # Generate plots only for the first two results
+        for i in range(min(2, len(filtered_results))):
+            try:
+                plot_url = generate_plot(filtered_results[i]['stock_data'], filtered_results[i]['ticker'])
+                filtered_results[i]['plot_url'] = plot_url
+                del filtered_results[i]['stock_data']
+            except Exception as e:
+                failed_tickers.append(f"Error generating plot for {filtered_results[i]['ticker']}: {str(e)}")
+
         return render_template(
             'investment_results.html',
             summary_table=summary_table,
@@ -206,6 +212,22 @@ def investment_opportunities():
         )
     
     return render_template('investment_opportunities.html')
+
+@app.route('/load_plot/<ticker>', methods=['POST'])
+def load_plot(ticker):
+    try:
+        start_date = request.form['start_date']
+        end_date = request.form['end_date']
+        
+        # Get stock data and generate plot
+        result = process_single_stock((ticker, ticker), start_date, end_date)
+        if result and result['stock_data'] is not None:
+            plot_url = generate_plot(result['stock_data'], ticker)
+            return jsonify({'success': True, 'plot_url': plot_url})
+        else:
+            return jsonify({'success': False, 'error': 'No data available'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 # stock 101 static page
 @app.route('/finance_101')
@@ -242,7 +264,6 @@ nifty_50_tickers = {
     "Hero MotoCorp": "HEROMOTOCO.NS",
     "Hindalco Industries": "HINDALCO.NS",
     "Hindustan Unilever": "HINDUNILVR.NS",
-    "HDFC": "HDFC.NS",
     "ICICI Bank": "ICICIBANK.NS",
     "Indian Oil Corporation": "IOC.NS",
     "IndusInd Bank": "INDUSINDBK.NS",

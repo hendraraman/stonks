@@ -71,7 +71,10 @@ def stock():
     start_date = pd.to_datetime(start_date) - pd.Timedelta(days=100)
 
     try:
-        stock_data = yf.download(ticker, start=start_date, period=period)
+        # stock_data = yf.download(ticker, start=start_date, period=period)
+        end_date = pd.to_datetime('today')  # Or use another logic
+        stock_data = yf.download(ticker, start=start_date, end=end_date)
+
         if stock_data.empty:
             return jsonify({'error': 'No data found for the given ticker and date range.'}), 404
 
